@@ -72,6 +72,7 @@ defmodule Livebook.Intellisense.Elixir.IdentifierMatcher do
               name: name(),
               arity: integer()
             }
+          | %{kind: :keyword, name: name()}
 
   @type name :: atom()
   @type display_name :: String.t()
@@ -98,6 +99,8 @@ defmodule Livebook.Intellisense.Elixir.IdentifierMatcher do
 
   @alias_only_atoms ~w(alias import require)a
   @alias_only_charlists ~w(alias import require)c
+
+  @block_keywords ~w(do end after catch else rescue)
 
   @doc """
   Clears all loaded entries stored for node.
@@ -247,6 +250,9 @@ defmodule Livebook.Intellisense.Elixir.IdentifierMatcher do
       {:struct, struct} ->
         match_struct(List.to_string(struct), ctx)
 
+      {:block_keyword_or_binary_operator, hint} ->
+        match_block_keyword(List.to_string(hint), ctx) || match_default(ctx)
+
       # :none
       _ ->
         []
@@ -349,6 +355,16 @@ defmodule Livebook.Intellisense.Elixir.IdentifierMatcher do
         has_struct?(module),
         not is_exception?(module),
         do: item
+  end
+
+  defp match_block_keyword(hint, ctx) do
+    for block_keyword <- @block_keywords, ctx.matcher.(block_keyword, hint) do
+      %{kind: :keyword, name: String.to_existing_atom(block_keyword)}
+    end
+    |> case do
+      [] -> nil
+      result -> result
+    end
   end
 
   defp has_struct?(mod) do
