@@ -73,6 +73,7 @@ defmodule Livebook.Intellisense.Elixir.IdentifierMatcher do
               arity: integer()
             }
           | %{kind: :keyword, name: name()}
+          | %{kind: :export, name: name(), arity: 2}
 
   @type name :: atom()
   @type display_name :: String.t()
@@ -101,6 +102,12 @@ defmodule Livebook.Intellisense.Elixir.IdentifierMatcher do
   @alias_only_charlists ~w(alias import require)c
 
   @block_keywords ~w(do end after catch else rescue)
+
+  @binary_operators ["**", "*", "/", "+", "-", "++", "--", "+++", "---", "..", "<>"] ++
+                      ["in", "not in", "|>", "<<<", ">>>", "<<~", "~>>", "<~", "~>", "<~>"] ++
+                      ["<", ">", "<=", ">=", "==", "!=", "=~", "===", "!=="] ++
+                      ["&&", "&&&", "and", "||", "|||", "or"] ++
+                      ["=", "=>", "|", "::", "when", "<-", "\\\\"]
 
   @doc """
   Clears all loaded entries stored for node.
@@ -251,7 +258,7 @@ defmodule Livebook.Intellisense.Elixir.IdentifierMatcher do
         match_struct(List.to_string(struct), ctx)
 
       {:block_keyword_or_binary_operator, hint} ->
-        match_block_keyword(List.to_string(hint), ctx) || match_default(ctx)
+        match_block_keyword_or_binary_operator(List.to_string(hint), ctx) || match_default(ctx)
 
       # :none
       _ ->
@@ -357,13 +364,64 @@ defmodule Livebook.Intellisense.Elixir.IdentifierMatcher do
         do: item
   end
 
-  defp match_block_keyword(hint, ctx) do
-    for block_keyword <- @block_keywords, ctx.matcher.(block_keyword, hint) do
-      %{kind: :keyword, name: String.to_existing_atom(block_keyword)}
+  defp match_block_keyword_or_binary_operator(hint, ctx) do
+    block_keywords =
+      for value <- match_block_keyword_or_binary_operator(hint, @block_keywords, ctx) do
+        %{kind: :keyword, name: value, documentation: "(keyword)"}
+      end
+
+    binary_operators =
+      for value <- match_block_keyword_or_binary_operator(hint, @binary_operators, ctx) do
+        {value, 2}
+      end
+
+    kernel_doc_items =
+      Intellisense.Elixir.Docs.lookup_module_members(Kernel, binary_operators, ctx.node)
+
+    bitwise_doc_items =
+      Intellisense.Elixir.Docs.lookup_module_members(Bitwise, binary_operators, ctx.node)
+
+    doc_item_fun = fn doc_item, name, arity, mod ->
+      (doc_item.name == name and doc_item.arity == arity) && {mod, doc_item}
     end
-    |> case do
-      [] -> nil
-      result -> result
+
+    binary_operators =
+      Enum.map(binary_operators, fn {name, arity} ->
+        result =
+          Enum.find_value(kernel_doc_items, &doc_item_fun.(&1, name, arity, Kernel)) ||
+            Enum.find_value(bitwise_doc_items, &doc_item_fun.(&1, name, arity, Bitwise))
+
+        if result do
+          {mod, doc_item} = result
+
+          %{
+            kind: :function,
+            module: mod,
+            name: name,
+            arity: arity,
+            type: nil,
+            display_name: Atom.to_string(name),
+            from_default: doc_item.from_default,
+            documentation: doc_item.documentation,
+            signatures: doc_item.signatures,
+            specs: doc_item.specs,
+            meta: doc_item.meta
+          }
+        else
+          %{kind: :binary_operator, name: name, arity: arity}
+        end
+      end)
+
+    result = block_keywords ++ binary_operators
+
+    if result != [] do
+      result
+    end
+  end
+
+  defp match_block_keyword_or_binary_operator(hint, values, ctx) do
+    for value <- values, ctx.matcher.(value, hint) do
+      String.to_existing_atom(value)
     end
   end
 

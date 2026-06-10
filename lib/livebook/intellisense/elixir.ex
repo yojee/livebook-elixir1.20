@@ -236,6 +236,14 @@ defmodule Livebook.Intellisense.Elixir do
       insert_text: name
     }
 
+  defp format_completion_item(%{kind: :binary_operator, name: name, arity: arity}),
+    do: %{
+      label: "#{name}/#{arity}",
+      kind: :binary_operator,
+      documentation: "(operator)",
+      insert_text: name
+    }
+
   defp keyword_macro?(name) do
     def? = name |> Atom.to_string() |> String.starts_with?("def")
 
@@ -314,7 +322,8 @@ defmodule Livebook.Intellisense.Elixir do
     :interface,
     :function,
     :type,
-    :bitstring_option
+    :bitstring_option,
+    :binary_operator
   ]
 
   defp completion_item_priority(%{kind: :struct} = completion_item) do
