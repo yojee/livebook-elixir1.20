@@ -1,175 +1,52 @@
-# Livebook
+# Livebook (Yojee fork)
 
-[![Website](https://img.shields.io/badge/-Website-%23ff87a7)](https://livebook.dev/)
-[![Latest Version](https://img.shields.io/hexpm/v/livebook?color=b5a3be&label=Latest+version)](https://hexdocs.pm/livebook)
+This is **Yojee's fork of [Livebook](https://github.com/livebook-dev/livebook)**,
+maintained for Yojee's internal use. It tracks upstream Livebook and publishes a
+Docker image to Yojee's GitHub Container Registry.
 
-Livebook is a web application for writing interactive and collaborative code notebooks. It features:
+For general Livebook documentation, features, and guides, see the
+[upstream project](https://github.com/livebook-dev/livebook) and the
+[official docs](https://hexdocs.pm/livebook/).
 
-  * Code notebooks with Markdown support and Code cells where Elixir code is evaluated on demand.
+## Running with Docker
 
-  * Rich code editor through [CodeMirror](https://codemirror.net/): with support for autocompletion, inline documentation, code formatting, etc.
-
-  * Interactive results via [Kino](https://github.com/elixir-nx/kino): display [Vega-Lite charts](https://vega.github.io/vega-lite/), tables, maps, and more.
-
-  * Automation: use Smart cells to perform high-level tasks and write notebooks faster than ever. Query databases, plot charts, build maps, and more directly from Livebook's UI.
-
-  * Reproducible: Livebook ensures your code runs in a predictable order, all the way down to package management. It also tracks your notebook state, annotating which parts are stale.
-
-  * Collaboration: multiple users can work on the same notebook at once, no additional setup required.
-
-  * Decentralized: Livebook is open-source and you can run it anywhere. The ["Run in Livebook" badge](https://livebook.dev/badge) makes it easy to import any Livebook into your own Livebook.
-
-  * Versionable: notebooks are stored in the `.livemd` format, which is a subset of Markdown with support for diagrams via [Mermaid](https://mermaid-js.github.io/mermaid) and for mathematical formulas via [KaTex](https://katex.org/). `.livemd` files can be shared and play well with version control.
-
-  * Custom runtimes: when executing Elixir code, you can either start a fresh Elixir instance, connect to an existing node, or run it inside an existing Elixir project, with access to all of its modules and dependencies. This means Livebook can be a great tool to introspect and document existing projects too.
-
-## Getting started
-
-Head out to [the Install section](https://livebook.dev/#install) of Livebook's website to get started. Once Livebook is up and running on your machine, **visit the "Learn" section** with introductory guides and documentation on several Livebook features. Here is a sneak peak of the "Welcome to Livebook" guide:
-
-![Screenshot](https://github.com/livebook-dev/livebook/raw/main/.github/imgs/welcome.png)
-
-There are more resources for those who are ready to dig deeper:
-
-  * [Our official documentation](https://hexdocs.pm/livebook/) with in-depth guides
-
-  * [Our Integrations page](https://livebook.dev/integrations/) covering the languages, data sources, and libraries that Livebook works with out-of-the-box
-
-  * [Our blog](https://news.livebook.dev/) with news, posts, and screencasts
-
-## Installation
-
-We provide several methods for running Livebook,
-pick the one that best fits your use case.
-
-### Desktop app
-
-  * [Download the installer for Mac and Windows from our homepage](https://livebook.dev/#install)
-
-  * Latest stable builds:
-    [macOS (arm64)](https://github.com/livebook-dev/livebook/releases/latest/download/Livebook-darwin-aarch64.dmg),
-    [macOS (x64)](https://github.com/livebook-dev/livebook/releases/latest/download/Livebook-darwin-x64.dmg),
-    [Windows](https://github.com/livebook-dev/livebook/releases/latest/download/Livebook-windows-x64.exe),
-    [Linux (arm64)](https://github.com/livebook-dev/livebook/releases/latest/download/Livebook-linux-aarch64.AppImage),
-    [Linux (x64)](https://github.com/livebook-dev/livebook/releases/latest/download/Livebook-linux-amd64.AppImage)
-
-  * Nightly builds:
-    [macOS (arm64)](https://github.com/livebook-dev/livebook/releases/download/nightly/Livebook-darwin-aarch64.dmg),
-    [macOS (x64)](https://github.com/livebook-dev/livebook/releases/download/nightly/Livebook-darwin-x64.dmg),
-    [Windows](https://github.com/livebook-dev/livebook/releases/download/nightly/Livebook-windows-x64.exe),
-    [Linux (arm64)](https://github.com/livebook-dev/livebook/releases/download/nightly/Livebook-linux-aarch64.AppImage),
-    [Linux (x64)](https://github.com/livebook-dev/livebook/releases/download/nightly/Livebook-linux-amd64.AppImage)
-
-  * Builds for particular Livebook version are available on our
-    [GitHub releases](https://github.com/livebook-dev/livebook/releases).
-
-### Docker
-
-Running Livebook using Docker is another great option to run Livebook
-in case you don't have Elixir installed.
+The Yojee image is published to `ghcr.io/yojee/yojee-livebook-elixir`.
 
 ```shell
-# Running with the default configuration
-docker run -p 8080:8080 -p 8081:8081 --pull always ghcr.io/livebook-dev/livebook
+# Run with the default configuration
+docker run -p 8080:8080 -p 8081:8081 ghcr.io/yojee/yojee-livebook-elixir:latest
 
-# In order to access and save notebooks directly to your machine
-# you can mount a local directory into the container.
-# Make sure to specify the user with "-u $(id -u):$(id -g)"
-# so that the created files have proper permissions
-docker run -p 8080:8080 -p 8081:8081 --pull always -u $(id -u):$(id -g) -v $(pwd):/data ghcr.io/livebook-dev/livebook
+# Set a password (must be at least 12 characters)
+docker run -p 8080:8080 -p 8081:8081 \
+  -e LIVEBOOK_PASSWORD="securesecret" \
+  ghcr.io/yojee/yojee-livebook-elixir:latest
 
-# You can configure Livebook using environment variables,
-# for all options see the dedicated "Environment variables" section below
-docker run -p 8080:8080 -p 8081:8081 --pull always -e LIVEBOOK_PASSWORD="securesecret" ghcr.io/livebook-dev/livebook
-
-# Or if you need to run on different ports:
-docker run -p 8090:8090 -p 8091:8091 --pull always -e LIVEBOOK_PORT=8090 -e LIVEBOOK_IFRAME_PORT=8091 ghcr.io/livebook-dev/livebook
+# Mount a local directory to read/save notebooks on your machine.
+# Run as your user so created files have the right permissions.
+docker run -p 8080:8080 -p 8081:8081 \
+  -u $(id -u):$(id -g) -v $(pwd):/data \
+  ghcr.io/yojee/yojee-livebook-elixir:latest
 ```
 
-To deploy Livebook on your cloud platform, see our [Docker Deployment](docs/deployment/docker.md) guide.
+Then open http://localhost:8080.
 
-For CUDA support, [see images with the "cuda" tag](https://github.com/livebook-dev/livebook/pkgs/container/livebook).
+## Publishing a new image
 
-To try out features from the main branch you can alternatively
-use the `ghcr.io/livebook-dev/livebook:nightly` image.
-See [Livebook images](https://github.com/livebook-dev/livebook/pkgs/container/livebook).
+The image is built and pushed by the [`Release`](.github/workflows/release.yml)
+GitHub Actions workflow. Trigger it manually (`workflow_dispatch`) and provide an
+image tag (e.g. `yojee-0.1.0`); optionally tag it as `latest`. The workflow builds
+for `linux/amd64` and `linux/arm64`.
 
-### Embedded devices
-
-If you want to run Livebook on embedded devices, such as Raspberry Pi, BeagleBone, etc.,
-check out [the Livebook firmware](https://github.com/nerves-livebook/nerves_livebook) built
-with [Nerves](https://www.nerves-project.org/).
-
-### Direct installation with Elixir
-
-You can run Livebook on your own machine using just Elixir. You will need
-[Elixir v1.18](https://elixir-lang.org/install.html) or later.
-Livebook also requires the following Erlang applications: `inets`,
-`os_mon`, `runtime_tools`, `ssl` and `xmerl`. Those applications come
-with most Erlang distributions but certain package managers may split
-them apart. For example, on Ubuntu, these Erlang applications can
-be installed as follows:
-
-```shell
-sudo apt install erlang-inets erlang-os-mon erlang-runtime-tools erlang-ssl erlang-xmerl erlang-dev erlang-parsetools
-```
-
-**Note:** The [`livebook` package](https://hex.pm/packages/livebook)
-is meant to be used as a CLI tool. Livebook is not officially
-supported as a Mix/Hex dependency.
-
-#### Escript
-
-Running Livebook using Escript makes for a very convenient option
-for local usage and provides easy configuration via CLI options.
-
-```shell
-mix do local.rebar --force, local.hex --force
-mix escript.install hex livebook
-
-# Start the Livebook server
-livebook server
-
-# See all the configuration options
-livebook server --help
-```
-
-After you install the escript, make sure you add the directory where
-Elixir keeps escripts to your [$PATH](https://en.wikipedia.org/wiki/PATH_(variable)).
-If you installed Elixir with `asdf`, you'll need to run `asdf reshim elixir`
-once the escript is built.
-
-To try out features from the main branch you can alternatively
-install the escript directly from GitHub like this:
-
-```shell
-mix escript.install github livebook-dev/livebook
-```
-
-#### From source
-
-You can run latest Livebook directly from source.
-
-```shell
-git clone https://github.com/livebook-dev/livebook.git
-cd livebook
-mix setup.prod
-
-# Run the Livebook server
-MIX_ENV=prod mix phx.server
-```
-
-## Security considerations
-
-Livebook is built to document and execute code. Anyone with access to a Livebook instance
-will be able to access any file and execute any code in the machine Livebook is running.
-
-For this reason, Livebook only binds to the 127.0.0.1, allowing access to happen only within
-the current machine. When running Livebook in the production environment - the recommended
-environment - we also generate a token on initialization and we only allow access to the
-Livebook if said token is supplied as part of the URL.
+For the version number, bump based on the latest in ghcr.io/yojee/yojee-livebook-elixir,
+e.g. if it's `yojee-0.1.0` and you made a minor fix, then bump to `yojee-0.1.1`. If you're
+building for a new version of Elixir, then bump to `yojee-0.2.0`.
 
 ## Environment variables
+
+The section below is also embedded into `livebook server --help` at compile time
+(see `lib/livebook_cli/server.ex`), which reads this file and splits on the two
+surrounding HTML comment markers — so do not remove them.
+
 <!-- Environment variables -->
 
 The following environment variables can be used to configure Livebook on boot:
@@ -325,82 +202,9 @@ Livebook, but it is not forwarded to runtimes.
 
 <!-- Environment variables -->
 
-If running Livebook via the command line, run `livebook server --help` to see
-all CLI-specific options.
-
-### Livebook Desktop
-
-When running Livebook Desktop, Livebook will invoke on boot a file named
-`~/.livebookdesktop.sh` on macOS or `%USERPROFILE%\.livebookdesktop.bat`
-on Windows. This file can set environment variables used by Livebook,
-such as:
-
-  * [the `PATH` environment variable](https://en.wikipedia.org/wiki/PATH_(variable))
-
-  * or to configure the Erlang VM, for instance, by setting
-    `ERL_AFLAGS="-proto_dist inet6_tcp"` if you need Livebook to run over IPv6
-
-Be careful when modifying boot files, Livebook may be unable to start if
-configured incorrectly.
-
-## Development
-
-Livebook is primarily a Phoenix web application and can be setup as such:
-
-```shell
-git clone https://github.com/livebook-dev/livebook.git
-cd livebook
-mix setup
-
-# Run the Livebook server
-mix phx.server
-
-# Run tests
-mix test
-```
-
-### Desktop app
-
-```shell
-./rel/app/tauri.sh dev
-```
-
-## Platinum sponsors
-
-<a href="https://fly.io">
- <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://fly.io/public/images/brand/logo-inverted.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://fly.io/public/images/brand/logo.svg">
-    <img height="130" src="https://fly.io/public/images/brand/logo.svg" alt="Fly.io">
-  </picture>
-</a>
-
-Fly is a platform for running full stack apps and databases close to your users.
-
-## Sponsors
-
-[<img src="https://nlnet.nl/logo/banner.png" alt="NLnet foundation logo" width="20%" />](https://nlnet.nl)
-[<img src="https://nlnet.nl/image/logos/NGI0_tag.svg" alt="NGI Zero Logo" width="20%" />](https://nlnet.nl/commonsfund)
-
-This project was a recipient of [NGI0 Commons Fund](https://nlnet.nl/commonsfund),<br />
-a fund established by [NLnet](https://nlnet.nl) with financial support from the<br />
-European Commission's [Next Generation Internet](https://ngi.eu) program.<br />
-[Learn more](https://nlnet.nl/project/Livebook-Python).
-
-<br />
-
-<a href="https://www.tigrisdata.com/">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://www.tigrisdata.com/docs/logo/dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://www.tigrisdata.com/docs/logo/light.png">
-    <img height="50" src="https://www.tigrisdata.com/docs/logo/light.png" alt="Tigris">
-  </picture>
-</a>
-
-Tigris is a globally distributed S3-compatible object storage<br />
-service that provides low latency anywhere in the world.
-
 ## License
+
+This project is a fork of Livebook and retains its original license.
 
 Copyright (C) 2021 Dashbit
 

@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Image tag to publish (e.g. 1.20.1). Defaults to the short commit SHA."
-        required: false
+        description: "Image tag to publish. Prefer to set it to `yojee-*.*.*`, e.g. `yojee-0.1.0`"
+        required: true
         type: string
       latest:
         description: "Also tag the image as 'latest'."
