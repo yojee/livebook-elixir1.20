@@ -1,7 +1,7 @@
 name: Release
 
-# Builds the Livebook Docker image (default variant, linux/amd64) and pushes
-# it to GitHub Container Registry under the yojee org. Triggered manually.
+# Builds the Livebook Docker image (default variant, linux/amd64 + linux/arm64)
+# and pushes it to GitHub Container Registry under the yojee org. Triggered manually.
 on:
   workflow_dispatch:
     inputs:
@@ -37,6 +37,9 @@ jobs:
           echo "otp=$otp" >> $GITHUB_ENV
           echo "ubuntu=$ubuntu" >> $GITHUB_ENV
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -61,7 +64,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
